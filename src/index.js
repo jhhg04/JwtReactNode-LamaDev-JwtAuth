@@ -44,6 +44,30 @@ app.post('/api/login', (req, res) => {
   }
 });
 
+const verify = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, 'mySecretKey', (err, user) => {
+      if (err) {
+        return res.status(401).json('Token is not valid!');
+      }
+      req.user = user;
+      next();
+    });
+  } else {
+    res.status(401).json('You are not authenticated!');
+  }
+};
+
+app.delete('/api/users/:userId', verify, (req, res) => {
+  if (req.user.id === req.params.userId || req.user.isAdmin) {
+    res.status(200).json('User has been deleted');
+  } else {
+    res.status(403).json('You are not allowed to delete this user!');
+  }
+});
+
 app.listen(app.get('port'), () => {
   console.log('SERVER is Running on port: ', app.get('port'));
 });
